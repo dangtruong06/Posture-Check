@@ -3,6 +3,7 @@ import mediapipe as mp
 from config import CALIBRATION_FRAMES
 from posture import compute_metrics, average_samples, check_posture
 from posture_state import PostureState
+from notifier import send_alert
 
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
@@ -21,7 +22,7 @@ calibrating = False
 calibration_samples = []    #list of dictionaries, each metric is a dictionary {"dist": 0.18, "shoulder_tilt": 0.004, "nose_y": 0.32}
 
 # CREATE STATE OBJECT 
-posture_state = PostureState(10)
+posture_state = PostureState(3)
 
 while True:
     ret, frame = cap.read()
@@ -62,7 +63,10 @@ while True:
 
             should_alert = posture_state.update(flags)
             if should_alert:
-                print("🚨 You've been slouching for over a minute — sit up straight!")
+                send_alert(
+                    title="Caution",
+                    message="🚨 You've been slouching for over a minute — sit up straight!"
+                )
 
     cv2.imshow('Live Posture Check', frame)
 
