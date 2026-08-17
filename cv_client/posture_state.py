@@ -13,7 +13,7 @@ class PostureState:
         self.bad_since = None
         self.bad_duration_threshold = bad_duration_threshold
         self.window_start_time = time.time()  #
-        self.window_duration = 20  # 5 minutes between every db log, adjust as needed
+        self.window_duration = 300  # 5 minutes between every db log, adjust as needed
         self.good_seconds = 0
         self.bad_seconds = 0
         self.alert_count = 0
