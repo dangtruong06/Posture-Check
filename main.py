@@ -61,12 +61,14 @@ while True:
             #check current posture with baseline average
             flags = check_posture(metrics, baseline)
 
-            should_alert = posture_state.update(flags)
+            should_alert, summary = posture_state.update(flags)
             if should_alert:
                 send_alert(
                     title="Caution",
                     message="🚨 You've been slouching for over a minute — sit up straight!"
                 )
+            if summary:
+                print(summary)  # post request to api_client goes here
 
     cv2.imshow('Live Posture Check', frame)
 

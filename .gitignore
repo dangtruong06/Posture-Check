@@ -1,2 +1,18 @@
+# Python
 venv/
 __pycache__/
+*.pyc
+*.pyo
+.env
+
+# Django
+db.sqlite3
+*.log
+
+# React (for when you get there)
+node_modules/
+build/
+.env.local
+
+# OS-specific
+.DS_Store
