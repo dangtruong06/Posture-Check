@@ -14,7 +14,6 @@ class PostureState:
         self.bad_duration_threshold = bad_duration_threshold
 
     def update(self, flags):
-
         # if good posture, reset
         if not flags:
             self.state = GOOD
