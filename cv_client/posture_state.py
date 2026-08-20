@@ -59,7 +59,7 @@ class PostureState:
                 'window_end': time.time(),
                 'time_in_good_posture': self.good_seconds,
                 'time_in_bad_posture': self.bad_seconds,
-                'times_alerted': self.alert_count
+                'times_notified': self.alert_count
             }
 
             # after logging the summary, reset to 0 to track the next posture window
