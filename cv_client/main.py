@@ -70,7 +70,6 @@ while True:
                 ) 
             if summary:
                 send_summary(summary)  # send_summary() fron api_client.py
-                print(summary)
 
     cv2.imshow('Live Posture Check', frame)
 
