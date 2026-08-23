@@ -1,10 +1,12 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
-from PySide6.QtCore import QThread
+from PySide6.QtCore import QThread, Signal
 
 from oauth_flow import GoogleLoginWorker
 
 
 class LoginScreen(QWidget):
+
+    login_successful = Signal(str, str)
     def __init__(self):
         super().__init__()
 
@@ -40,9 +42,7 @@ class LoginScreen(QWidget):
 
     def on_login_success(self, access_token, refresh_token):
         self.status_label.setText("Login successful!")
-        print("ACCESS:", access_token)
-        print("REFRESH:", refresh_token)
-        # TODO: store tokens, switch to dashboard screen
+        self.login_successful.emit(access_token, refresh_token)
 
     def on_login_failure(self, error_message):
         self.status_label.setText(f"Login failed: {error_message}")

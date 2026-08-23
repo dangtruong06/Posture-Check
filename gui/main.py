@@ -9,17 +9,26 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Posture Tracker")
         self.resize(800, 600)
 
+        self.access_token = None
+        self.refresh_token = None
+
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
 
-        # placeholders for now — real screens come next
         self.login_screen = LoginScreen()
         self.dashboard_screen = DashboardScreen()
+
+        self.login_screen.login_successful.connect(self.on_login_successful)
 
         self.stack.addWidget(self.login_screen)      # index 0
         self.stack.addWidget(self.dashboard_screen)   # index 1 
 
         self.stack.setCurrentIndex(0)  # start on login
+
+    def on_login_successful(self, access_token, refresh_token):
+        self.access_token = access_token
+        self.refresh_token = refresh_token
+        self.stack.setCurrentIndex(1)
 
 def main():
     app = QApplication(sys.argv)

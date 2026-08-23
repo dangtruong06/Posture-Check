@@ -16,8 +16,6 @@ GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
 REDIRECT_URI = "http://localhost:8765"
 DJANGO_AUTH_URL = "http://localhost:8000/api/auth/google/"
 
-print(GOOGLE_CLIENT_ID)
-
 def generate_pkce_pair():
     code_verifier = secrets.token_urlsafe(64)
     digest = hashlib.sha256(code_verifier.encode('utf-8')).digest()
