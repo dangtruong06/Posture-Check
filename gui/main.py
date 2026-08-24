@@ -28,6 +28,7 @@ class MainWindow(QMainWindow):
     def on_login_successful(self, access_token, refresh_token):
         self.access_token = access_token
         self.refresh_token = refresh_token
+        self.dashboard_screen.load_data(access_token)  # STILL NEED TO WRITE THIS FUNCTION
         self.stack.setCurrentIndex(1)
 
 def main():
