@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 import subprocess
 from pathlib import Path
 import requests
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent 
 CV_CLIENT_PYTHON = BASE_DIR / "cv_client" / "venv" / "bin" / "python"
@@ -30,7 +31,10 @@ class DashboardScreen(QWidget):
         self.camera_process = None
 
     def start_camera(self):
-        self.camera_process = subprocess.Popen([str(CV_CLIENT_PYTHON), str(CV_CLIENT_MAIN)])
+        env = os.environ.copy()
+        env["POSTURE_ACCESS_TOKEN"] = self.access_token
+
+        self.camera_process = subprocess.Popen([str(CV_CLIENT_PYTHON), str(CV_CLIENT_MAIN)], env=env)
         self.start_button.setEnabled(False)
         self.stop_button.setEnabled(True)
     
@@ -43,6 +47,7 @@ class DashboardScreen(QWidget):
         self.stop_button.setEnabled(False)
 
     def load_data(self, access_token):
+        self.access_token = access_token
         headers = {
             'Authorization': f'Bearer {access_token}'
         }

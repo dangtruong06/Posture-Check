@@ -13,8 +13,12 @@ from django.conf import settings
 
 # Create your views here.
 class PostureSummaryViewSet(viewsets.ModelViewSet):
-    queryset = PostureSummary.objects.all()
     serializer_class = PostureSummarySerializer
+    def get_queryset(self):
+        return PostureSummary.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 # google log in view function
 @api_view(['POST'])

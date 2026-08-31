@@ -5,6 +5,9 @@ from posture import compute_metrics, average_samples, check_posture
 from posture_state import PostureState
 from notifier import send_alert
 from api_client import send_summary
+import os
+
+access_token = os.getenv("POSTURE_ACCESS_TOKEN")
 
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
@@ -69,7 +72,7 @@ while True:
                     message="🚨 You've been slouching for over a minute — sit up straight!"
                 ) 
             if summary:
-                send_summary(summary)  # send_summary() fron api_client.py
+                send_summary(summary, access_token)  # send_summary() fron api_client.py
 
     cv2.imshow('Live Posture Check', frame)
 
