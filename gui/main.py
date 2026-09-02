@@ -31,6 +31,9 @@ class MainWindow(QMainWindow):
         self.dashboard_screen.load_data(access_token)  # STILL NEED TO WRITE THIS FUNCTION
         self.stack.setCurrentIndex(1)
 
+        self.raise_()
+        self.activateWindow()
+
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
