@@ -8,6 +8,7 @@ from api_client import send_summary
 import os
 
 access_token = os.getenv("POSTURE_ACCESS_TOKEN")
+refresh_token = os.getenv("POSTURE_REFRESH_TOKEN")
 
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
@@ -26,7 +27,7 @@ calibrating = False
 calibration_samples = []    #list of dictionaries, each metric is a dictionary {"dist": 0.18, "shoulder_tilt": 0.004, "nose_y": 0.32}
 
 # CREATE STATE OBJECT 
-posture_state = PostureState(30)
+posture_state = PostureState()
 
 while True:
     ret, frame = cap.read()
@@ -72,7 +73,7 @@ while True:
                     message="🚨 You've been slouching for over a minute — sit up straight!"
                 ) 
             if summary:
-                send_summary(summary, access_token)  # send_summary() fron api_client.py
+                access_token = send_summary(summary, access_token, refresh_token)  # send_summary() fron api_client.py
 
     cv2.imshow('Live Posture Check', frame)
 
