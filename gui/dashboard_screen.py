@@ -20,28 +20,60 @@ REFRESH_INTERVAL_MS = 5 * 60 * 1000 + 15 * 1000
 GOOD_COLOR = "#31eb53"
 BAD_COLOR = "#fa512a"
 
+def refresh_access_token(refresh_token):
+    try:
+        response = requests.post(
+            f'{BACKEND_BASE_URL}api/token/refresh/',
+            json={'refresh': refresh_token},
+        )
+        response.raise_for_status()
+    except requests.RequestException as e:
+        print(f"Failed to get new token: {e}")
+        return None
+
+    return response.json()['access']
 
 class SummaryFetchWorker(QObject):
 
-    success = Signal(list)
+    success = Signal(list, str)
     failure = Signal(str)
     finished = Signal()
 
-    def __init__(self, access_token):
+    def __init__(self, access_token, refresh_token):
         super().__init__()
         self.access_token = access_token
+        self.refresh_token = refresh_token
 
     def run(self):
         try:
             headers = {'Authorization': f'Bearer {self.access_token}'}
             response = requests.get(
-                f'{BACKEND_BASE_URL}api/posture_summaries',
+                f'{BACKEND_BASE_URL}api/posture_summaries/',
                 headers=headers,
             )
             response.raise_for_status()
-            self.success.emit(response.json())
+            self.success.emit(response.json(), self.access_token)
         except requests.RequestException as e:
-            self.failure.emit(str(e))
+            if e.response is None or e.response.status_code != 401:
+                self.failure.emit(str(e))
+                return
+            
+            new_token = refresh_access_token(self.refresh_token)
+            if new_token is None:
+                    self.failure.emit("Token refresh failed")
+                    return
+
+            try:
+                headers = {'Authorization': f'Bearer {new_token}'}
+                retry_response = requests.get(
+                    f'{BACKEND_BASE_URL}api/posture_summaries/',
+                    headers=headers,
+                )
+                retry_response.raise_for_status()
+                self.success.emit(retry_response.json(), new_token)
+            except requests.RequestException as retry_error:
+                self.failure.emit(str(retry_error))
+
         finally:
             self.finished.emit()
 
@@ -120,6 +152,10 @@ class DashboardScreen(QWidget):
         chart_layout = QVBoxLayout()
         chart_layout.setAlignment(Qt.AlignCenter)
 
+        self.chart_title = QLabel("")
+        self.chart_title.setObjectName("ChartTitle")
+        self.chart_title.setAlignment(Qt.AlignCenter)
+
         self.figure = Figure(figsize=(2.2, 2.2))
         self.canvas = FigureCanvasQTAgg(self.figure)
         self.canvas.setStyleSheet("background: transparent;")
@@ -131,6 +167,7 @@ class DashboardScreen(QWidget):
         legend.addWidget(self._legend_item("Good", GOOD_COLOR))
         legend.addWidget(self._legend_item("Bad", BAD_COLOR))
 
+        chart_layout.addWidget(self.chart_title)
         chart_layout.addWidget(self.canvas)
         chart_layout.addLayout(legend)
         chart_card.setLayout(chart_layout)
@@ -201,7 +238,7 @@ class DashboardScreen(QWidget):
             return
 
         self.thread = QThread()
-        self.worker = SummaryFetchWorker(self.access_token)
+        self.worker = SummaryFetchWorker(self.access_token, self.refresh_token)
         self.worker.moveToThread(self.thread)
 
         self.thread.started.connect(self.worker.run)
@@ -211,22 +248,26 @@ class DashboardScreen(QWidget):
 
         self.thread.start()
 
-    def on_summaries_fetched(self, data):
+    def on_summaries_fetched(self, data, current_access_token):
+        self.access_token = current_access_token
         self.summaries = data
         recent = self.summaries[-3:]
+
+        window_minutes = len(recent) * 5 
+        self.chart_title.setText(f"Average posture in last {window_minutes} mins")
 
         if not recent:
             return
 
-        good = sum(x['time_in_good_posture'] for x in recent) / len(recent)
-        bad = sum(x['time_in_bad_posture'] for x in recent) / len(recent)
+        good_total = sum(x['time_in_good_posture'] for x in recent)
+        bad_total = sum(x['time_in_bad_posture'] for x in recent)
         alerts = sum(x['times_notified'] for x in recent)
 
-        total = good + bad
-        good_pct = (good / total * 100) if total else 0
-        bad_pct = (bad / total * 100) if total else 0
-        good_mins = good / 60
-        bad_mins = bad / 60
+        total = good_total + bad_total
+        good_pct = (good_total / total * 100) if total else 0
+        bad_pct = (bad_total / total * 100) if total else 0
+        good_mins = good_total / 60
+        bad_mins = bad_total / 60
 
         self.good_card.set_values(f"{good_pct:.0f}%", f"{good_mins:.1f} min")
         self.bad_card.set_values(f"{bad_pct:.0f}%", f"{bad_mins:.1f} min")
@@ -272,4 +313,5 @@ class DashboardScreen(QWidget):
             #StatLabel { font-size: 13px; color: #9b968a; }
             #StatValue { font-size: 24px; font-weight: 500; }
             #StatSubvalue { font-size: 13px; color: #9b968a; }
+            #ChartTitle { font-size: 16px; color: #9b968a; margin-bottom: 10px; }
         """
